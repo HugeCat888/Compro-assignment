@@ -1,0 +1,56 @@
+=========================
+ STOCK MANAGEMENT REPORT
+=========================
+
+Generated At : 2025-09-20 16:06:56 (+07:00)
+App Version : 1.0
+Endianness : Little-Endian
+Encoding : UTF-8 (fixed-length)
+
+[1] PRODUCT SUMMARY
++--------+-----------------------------+-----------+----------+------+-----------+---------+
+| ProdID | Name                        | Category  | Quantity | Unit | SellPrice | Status  |  
++--------+-----------------------------+-----------+----------+------+-----------+---------+
+| P001   | น้ำดื่มคริสตัล              	    | เครื่องดื่ม    | 75       | ขวด   | 14.00     | Active  | 
+| P002   | ข้าวหอมมะลิ 5 กก.             | อาหาร      | 50       | ถุง    | 185.00    | Restock  | 
+| P003   | แม่ถ้วนหล่อแดงตาซอย            | เครื่องดื่ม    | 120      | กล่อง  | 12.00     | Active  | 
+| P004   | บะหมี่กึ่งสำเร็จรูป มาม่า            | อาหาร     | 200      | ซอง   | 6.00      | Active  | 
+| P005   | ปลากระป๋องโรซ่า                | อาหาร      | 40       | กระป๋อง | 22.00    | Deactivate | 
+| P006   | โค้ก 1.25 ลิตร                | เครื่องดื่ม    | 60       | ขวด   | 25.00     | Active  | 
++--------+-----------------------------+-----------+----------+------+-----------+------------+
+
+Summary (Active only)
+- Total Products (records) : 6
+- Active Products : 5
+- Restock Products: 1
+- Deactivate Products : 1
+
+Price Statistics (THB, Active only)
+- Min Price : 6.00
+- Max Price : 185.00
+
+Products by Category (Active only)
+- เครื่องดื่ม : 3
+- อาหาร : 1	
+
+[2] SALES SUMMARY
+- Total Sales      : 350,000.00 บาท
+- Transactions	   : 20
+- Best Seller      : น้ำดื่มคริสตัล (500 ขวด)
+- Min Seller	   : โค้ก 1.25 ลิตร
+- Sales by Category:
+  * เครื่องดื่ม 	 : 180,000.00 บาท
+  * อาหาร     : 100,000.00 บาท
+  * ของใช้     : 70,000.00 บาท
+
+[3] PURCHASES SUMMARY
+- Total Purchases  : 200,000.00 บาท
+- Transactions     : 30
+- Purchases by Product:
+  * น้ำดื่มคริสตัล : 50,000.00 บาท
+  * ข้าวหอมมะลิ    : 30,000.00 บาท
+
+[4] PROFIT & LOSS SUMMARY
+- Total Revenue    : 350,000.00 บาท
+- Total Cost       : 200,000.00 บาท
+- Gross Profit     : 150,000.00 บาท
