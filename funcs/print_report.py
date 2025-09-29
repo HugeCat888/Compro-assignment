@@ -40,7 +40,7 @@ purchase_size = st.calcsize(purchase_fmt)
 
 def print_report():
     # --- HEADER AND FORMAT LINE (match report.txt) ---
-    col_widths = [8, 8, 30, 13, 10, 12, 13, 17, 11]
+    col_widths = [8, 8, 30, 13, 10, 12, 13, 14, 11]
     header = (
         "+--------+--------+------------------------------+-------------+----------+------------+-------------+---------------+------------+\n"
     )

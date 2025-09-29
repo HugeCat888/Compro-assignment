@@ -575,7 +575,7 @@ def product_handler(path, fmt, size):
                                         next_sale_num = num + 1
                     sale_id = f"S{next_sale_num:05d}"
                     current_time = datetime.datetime.now().timestamp()
-                    total = (sell * sell_price) + 5
+                    total = (sell * sell_price) + ((sell * sell_price) * 0.07)
                     sale_record = st.pack(
                         sale_fmt,
                         fix_str(sale_id),
