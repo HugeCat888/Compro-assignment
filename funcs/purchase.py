@@ -25,10 +25,9 @@ def purchase_handler(path, fmt, size):
                     if read_opt == 1:
                         with open(path, "rb") as file:
                             while chuck := file.read(size):
-                                purchaseId, productId, productName, quantity, total, Note, created_at, updated_at = st.unpack(fmt, chuck)
+                                purchaseId, productId, quantity, total, Note, created_at, updated_at = st.unpack(fmt, chuck)
                                 print(f"\n| Purchase ID: {decode_str(purchaseId)}")
                                 print(f"| Product ID: {decode_str(productId)}")
-                                print(f"| Product Name: {decode_str(productName)}")
                                 print(f"| Quantity: {quantity}")
                                 print(f"| Total: {total}")
                                 print(f"| Note: {decode_str(Note)}")
@@ -43,11 +42,10 @@ def purchase_handler(path, fmt, size):
                         with open(path, "rb") as file:
                             print(f"Purchase details for ID {purchase_id}: ")
                             while chuck := file.read(size):
-                                purchaseId, productId, productName, quantity, total, Note, created_at, updated_at = st.unpack(fmt, chuck)
+                                purchaseId, productId, quantity, total, Note, created_at, updated_at = st.unpack(fmt, chuck)
                                 if decode_str(purchaseId) == purchase_id:
                                     print(f"\n| Purchase ID: {decode_str(purchaseId)}")
                                     print(f"| Product ID: {decode_str(productId)}")
-                                    print(f"| Product Name: {decode_str(productName)}")
                                     print(f"| Quantity: {quantity}")
                                     print(f"| Total: {total}")
                                     print(f"| Note: {decode_str(Note)}")

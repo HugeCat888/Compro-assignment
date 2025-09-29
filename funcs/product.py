@@ -4,11 +4,11 @@ import datetime
 from funcs.fix_str import fix_str, decode_str
 
 sale_path = "sales.bin"
-sale_fmt = "<6s6s200siffdd"
+sale_fmt = "<6s6sifdd"
 sale_size = st.calcsize(sale_fmt)
 
 purchase_path = "purchases.bin"
-purchase_fmt = "<6s6s200sif255sdd"
+purchase_fmt = "<6s6sif255sdd"
 purchase_size = st.calcsize(purchase_fmt)
 
 def product_handler(path, fmt, size):
@@ -44,7 +44,7 @@ def product_handler(path, fmt, size):
                         # Format product ID
                         product_id = "0" * (5 - len(product_id)) + product_id
                         if not product_id.startswith("P"):
-                            product_id = "P" + product_id[1:] if len(product_id) > 1 else "P" + product_id
+                            product_id = "P" + product_id
                         break
                     
                     # Check if product ID already exists
@@ -118,7 +118,7 @@ def product_handler(path, fmt, size):
                             print("Error: Please enter a valid price")
                     
                     # Determine status based on quantity
-                    status = "Active" if quantity >= 10 else "Restock" if quantity >= 5 else "Deactive"
+                    status = "Active" if quantity >= 50 else "Restock" if quantity >= 20 else "Deactive"
                     
                     # Create the product record
                     record = st.pack(
@@ -207,7 +207,7 @@ def product_handler(path, fmt, size):
                                 continue
                             productId = "0" * (5 - len(productId)) + productId
                             if not productId.startswith("P"):
-                                productId = "P" + productId[1:] if len(productId) > 1 else "P" + productId
+                                productId = "P" + productId
                             break
                         
                         product_found = False
@@ -257,7 +257,7 @@ def product_handler(path, fmt, size):
                             continue
                         productId = "0" * (5 - len(productId)) + productId
                         if not productId.startswith("P"):
-                            productId = "P" + productId[1:] if len(productId) > 1 else "P" + productId
+                            productId = "P" + productId
                         break
 
                     # Find the product
@@ -375,7 +375,7 @@ def product_handler(path, fmt, size):
                                 print("Error: Please enter a valid price")
 
                     # Update status based on new quantity
-                    new_status = "Active" if new_quantity >= 10 else "Restock" if new_quantity >= 5 else "Deactive"
+                    new_status = "Active" if new_quantity >= 50 else "Restock" if new_quantity >= 20 else "Deactive"
 
                     # Prepare new record
                     new_record = st.pack(
@@ -457,7 +457,7 @@ def product_handler(path, fmt, size):
                                 continue
                             productId = "0" * (5 - len(productId)) + productId
                             if not productId.startswith("P"):
-                                productId = "P" + productId[1:] if len(productId) > 1 else "P" + productId
+                                productId = "P" + productId
                             break
 
                         # First check if product exists and show its details
@@ -562,20 +562,25 @@ def product_handler(path, fmt, size):
                         print("Error: Not enough stock to sell.")
                         continue
                     
-                    sale_id = input("Enter Sale ID (start with S): ")
-                    if "0" not in sale_id or len(sale_id) < 6:
-                        sale_id = "0" * (5 - len(sale_id)) + sale_id
-                        if not sale_id.startswith("S"):
-                            sale_id = "S" + sale_id
+                    # Auto-generate Sale ID
+                    next_sale_num = 1
+                    if os.path.exists(sale_path):
+                        with open(sale_path, "rb") as sale_file:
+                            while chuck := sale_file.read(sale_size):
+                                sId, *_ = st.unpack(sale_fmt, chuck)
+                                sId_decoded = decode_str(sId)
+                                if sId_decoded.startswith("S") and sId_decoded[1:].isdigit():
+                                    num = int(sId_decoded[1:])
+                                    if num >= next_sale_num:
+                                        next_sale_num = num + 1
+                    sale_id = f"S{next_sale_num:05d}"
                     current_time = datetime.datetime.now().timestamp()
-                    total = sell * sell_price
+                    total = (sell * sell_price) + 5
                     sale_record = st.pack(
                         sale_fmt,
                         fix_str(sale_id),
                         pId,
-                        name,
                         sell,
-                        sell_price,
                         total,
                         current_time,
                         current_time
@@ -587,18 +592,16 @@ def product_handler(path, fmt, size):
                         
                         with open(sale_path, "rb") as sale_file, open(temp_path, "wb") as temp:
                             while chuck := sale_file.read(sale_size):
-                                sId, spId, sname, squantity, sprice, stotal, screated, supdated = st.unpack(sale_fmt, chuck)
+                                sId, spId, squantity, stotal, screated, supdated = st.unpack(sale_fmt, chuck)
                                 if decode_str(sId) == sale_id:  # Check by sale_id instead of product_id
                                     sale_found = True
                                     new_qty = squantity + sell
-                                    new_total = new_qty * sprice
+                                    new_total = (new_qty * sell_price) + 5
                                     new_sale_record = st.pack(
                                         sale_fmt,
                                         sId,
                                         spId,
-                                        sname,
                                         new_qty,
-                                        sprice,
                                         new_total,
                                         screated,  # Keep original creation time
                                         current_time  # Update the update time
@@ -614,7 +617,7 @@ def product_handler(path, fmt, size):
                             sale_file.write(sale_record)
                     
                     new_quantity = quantity - sell
-                    new_status = "Active" if new_quantity >= 10 else "Restock" if new_quantity >= 5 else "Deactive"
+                    new_status = "Active" if new_quantity >= 50 else "Restock" if new_quantity >= 20 else "Deactive"
                     
                     new_record = st.pack(
                         fmt,
@@ -663,19 +666,18 @@ def product_handler(path, fmt, size):
                     print(f"| Sell_price: {sell_price}")
                     print(f"| Status: {decode_str(status)}")
                     
-                    purchase_id = input("\nEnter Purchase ID (start with I): ")
-                    if "0" not in purchase_id or len(purchase_id) < 6:
-                        purchase_id = "0" * (5 - len(purchase_id)) + purchase_id
-                        if not purchase_id.startswith("I"):
-                            purchase_id = "I" + purchase_id
-
-                    # Check if purchase ID already exists
+                    # Auto-generate Purchase ID
+                    next_purchase_num = 1
                     if os.path.exists(purchase_path):
-                        with open(purchase_path, "rb") as check_file:
-                            while check_chunk := check_file.read(purchase_size):
-                                check_id, *_ = st.unpack(purchase_fmt, check_chunk)
-                                if decode_str(check_id) == purchase_id:
-                                    print(f"Purchase ID {purchase_id} found. Will update existing record.")
+                        with open(purchase_path, "rb") as purchase_file:
+                            while chunk := purchase_file.read(purchase_size):
+                                purId, *_ = st.unpack(purchase_fmt, chunk)
+                                purId_decoded = decode_str(purId)
+                                if purId_decoded.startswith("I") and purId_decoded[1:].isdigit():
+                                    num = int(purId_decoded[1:])
+                                    if num >= next_purchase_num:
+                                        next_purchase_num = num + 1
+                    purchase_id = f"I{next_purchase_num:05d}"
                     
                     purchase_qty = int(input("Enter quantity to purchase: "))
                     if purchase_qty <= 0:
@@ -689,8 +691,7 @@ def product_handler(path, fmt, size):
                     new_purchase = st.pack(
                         purchase_fmt,
                         fix_str(purchase_id),  
-                        pId,                   
-                        name,                  
+                        pId,                                  
                         purchase_qty,          
                         total,                 
                         fix_str(purchase_desc), 
@@ -705,7 +706,7 @@ def product_handler(path, fmt, size):
                         try:
                             with open(purchase_path, "rb") as pur_file, open(temp_path, "wb") as temp:
                                 while chunk := pur_file.read(purchase_size):
-                                    purId, ppId, pname, pquantity, ptotal, pdesc, pcreated, pupdated = st.unpack(purchase_fmt, chunk)
+                                    purId, ppId, pquantity, ptotal, pdesc, pcreated, pupdated = st.unpack(purchase_fmt, chunk)
                                     if decode_str(purId) == purchase_id:
                                         
                                         purchase_found = True
@@ -714,8 +715,7 @@ def product_handler(path, fmt, size):
                                         temp.write(st.pack(
                                             purchase_fmt,
                                             purId,            
-                                            ppId,           
-                                            pname,          
+                                            ppId,                    
                                             new_qty,
                                             new_total,
                                             pdesc,          
@@ -740,7 +740,7 @@ def product_handler(path, fmt, size):
                             
                     
                     new_quantity = quantity + purchase_qty
-                    new_status = "Active" if new_quantity >= 10 else "Restock" if new_quantity >= 5 else "Deactive"
+                    new_status = "Active" if new_quantity >= 50 else "Restock" if new_quantity >= 20 else "Deactive"
                     
                     
                     new_record = st.pack(

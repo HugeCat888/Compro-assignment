@@ -28,12 +28,10 @@ def sale_handler(path, fmt, size):
                     if read_opt == 1:
                         with open(path, "rb") as file:
                             while chuck := file.read(size):
-                                saleId, productId, productName, quantity, price, totalAmount, created_at, updated_at = st.unpack(fmt, chuck)
+                                saleId, productId, quantity, totalAmount, created_at, updated_at = st.unpack(fmt, chuck)
                                 print(f"\n| Sale ID: {decode_str(saleId)}")
                                 print(f"| Product ID: {decode_str(productId)}")
-                                print(f"| Product Name: {decode_str(productName)}")
                                 print(f"| Quantity: {quantity}")
-                                print(f"| Price: {price}")
                                 print(f"| Total Amount: {totalAmount}")
                                 print(f"| Created At: {created_at}")
                                 print(f"| Updated At: {updated_at}")
@@ -46,13 +44,11 @@ def sale_handler(path, fmt, size):
                         with open(path, "rb") as file:
                             print(f"Sale details for ID {sale_id}: ")
                             while chuck := file.read(size):
-                                saleId, productId, productName, quantity, price, totalAmount, created_at, updated_at = st.unpack(fmt, chuck)
+                                saleId, productId, quantity, totalAmount, created_at, updated_at = st.unpack(fmt, chuck)
                                 if decode_str(saleId) == sale_id:
                                     print(f"\n| Sale ID: {decode_str(saleId)}")
                                     print(f"| Product ID: {decode_str(productId)}")
-                                    print(f"| Product Name: {decode_str(productName)}")
                                     print(f"| Quantity: {quantity}")
-                                    print(f"| Price: {price}")
                                     print(f"| Total Amount: {totalAmount}")
                                     print(f"| Created At: {created_at}")
                                     print(f"| Updated At: {updated_at}")

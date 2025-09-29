@@ -8,10 +8,10 @@ from funcs.print_report import print_report
 product_fmt = "<6s200s50si50sf15s"
 product_size = st.calcsize(product_fmt)
 
-sale_fmt = "<6s6s200siffdd"
+sale_fmt = "<6s6sifdd"
 sale_size = st.calcsize(sale_fmt)
 
-purchase_fmt = "<6s6s200sif255sdd"
+purchase_fmt = "<6s6sif255sdd"
 purchase_size = st.calcsize(purchase_fmt)
 
 def main():

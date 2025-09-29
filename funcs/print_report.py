@@ -15,261 +15,209 @@ from funcs.fix_str import fix_str, decode_str
 # sales.bin
 # [0] sale_id: 6s
 # [1] product_id: 6s
-# [2] product_name: 200s
-# [3] quantity: i
-# [4] price: f
-# [5] total_amount: f
-# [6] created_at: d
-# [7] updated_at: d
+# [2] quantity: i
+# [3] total_amount: f
+# [4] created_at: d
+# [5] updated_at: d
 
 # purchases.bin
 # [0] purchase_id: 6s
 # [1] product_id: 6s
-# [2] product_name: 200s
-# [3] quantity: i
-# [4] total: f
-# [5] note: 255s
-# [6] created_at: d
-# [7] updated_at: d
+# [2] quantity: i
+# [3] total: f
+# [4] note: 255s
+# [5] created_at: d
+# [6] updated_at: d
 
 product_fmt = "<6s200s50si50sf15s"
 product_size = st.calcsize(product_fmt)
 
-sale_fmt = "<6s6s200siffdd"
+sale_fmt = "<6s6sifdd"
 sale_size = st.calcsize(sale_fmt)
 
-purchase_fmt = "<6s6s200sif255sdd"
+purchase_fmt = "<6s6sif255sdd"
 purchase_size = st.calcsize(purchase_fmt)
 
-def center_text(text, width, fill_char=" "):
-    text_length = len(text)
-    padding = (width - text_length) // 2
-    return fill_char * padding + text + fill_char * (width - text_length - padding)
-
-def format_number(num):
-    return "{:.2f}".format(num)
-
-def format_cell(text, width, align="left"):
-    if align == "right":
-        return " " * (width - len(text)) + text
-    else:
-        return text + " " * (width - len(text))
-
 def print_report():
-    # Initialize data storage
-    product_data = []
-    sales_data = []
-    purchase_data = []
-    
-    # Get current timezone offset
-    utc_offset = datetime.datetime.now().astimezone().strftime('%z')
-    utc_offset = f"{utc_offset[:3]}:{utc_offset[3:]}"
-    
+    # --- HEADER AND FORMAT LINE (match report.txt) ---
+    col_widths = [8, 8, 30, 13, 10, 12, 13, 17, 11]
+    header = (
+        "+--------+--------+------------------------------+-------------+----------+------------+-------------+---------------+------------+\n"
+    )
+    header_titles = (
+        "| SellId | ProdId | Name                         | Category    | Price    | Sell Amount| Prod Remain | Last Purchase | Status     |"
+    )
+    def format_line(cols):
+        return (
+            f"| {str(cols[0]).ljust(6)} "
+            f"| {str(cols[1]).ljust(6)} "
+            f"| {str(cols[2]).ljust(33)} "
+            f"| {str(cols[3]).ljust(12)} "
+            f"| {str(cols[4]).rjust(8)} "
+            f"| {str(cols[5]).rjust(10)} "
+            f"| {str(cols[6]).rjust(11)} "
+            f"| {str(cols[7]).rjust(16)} "
+            f"| {str(cols[8]).ljust(10)}|"
+        )
+    # --- END HEADER AND FORMAT LINE ---
+
+    # Read products
+    products = []
+    if os.path.exists("products.bin"):
+        with open("products.bin", "rb") as f:
+            while chunk := f.read(product_size):
+                products.append(st.unpack(product_fmt, chunk))
+
+    # Read sales
+    sales = []
+    if os.path.exists("sales.bin"):
+        with open("sales.bin", "rb") as f:
+            while chunk := f.read(sale_size):
+                sales.append(st.unpack(sale_fmt, chunk))
+
+    # Read purchases
+    purchases = []
+    if os.path.exists("purchases.bin"):
+        with open("purchases.bin", "rb") as f:
+            while chunk := f.read(purchase_size):
+                purchases.append(st.unpack(purchase_fmt, chunk))
+
+    # Prepare product summary rows
+    product_rows = []
+    # Build a mapping from product_id to latest purchase date
+    last_purchase_map = {}
+    for p in purchases:
+        prod_id = decode_str(p[1])
+        purchase_date = datetime.datetime.fromtimestamp(p[5]).strftime("%d/%m")
+        if prod_id not in last_purchase_map or p[6] > last_purchase_map[prod_id][0]:
+            last_purchase_map[prod_id] = (p[6], purchase_date)
+    # For each sale, show the row as in report.txt
+    for s in sales:
+        sale_id = decode_str(s[0])
+        prod_id = decode_str(s[1])
+        sell_amount = s[2]
+        # Find product info
+        prod_info = next((prod for prod in products if decode_str(prod[0]) == prod_id), None)
+        if prod_info:
+            pId, name, category, quantity, unit, price, status = prod_info
+            name = decode_str(name)
+            category = decode_str(category)
+            status = decode_str(status)
+            # Last purchase date for this product
+            last_purchase = last_purchase_map.get(prod_id, (None, "--/--"))[1]
+            product_rows.append([
+                sale_id,
+                prod_id,
+                name,
+                category,
+                f"{price:8.2f}",
+                f"{sell_amount:10}",
+                f"{quantity:10}",
+                last_purchase,
+                status
+            ])
+
+    # --- SUMMARY AND STATISTICS ---
+    summary_stats = {
+        "total": 0, "active": 0, "restock": 0, "deactive": 0,
+        "min_price": float("inf"), "max_price": 0,
+        "categories": {}
+    }
+    sales_by_category = {}
+    purchases_by_product = {}
+    total_sales = 0.0
+    total_purchases = 0.0
+    best_seller = {"name": "", "amount": 0}
+    min_seller = {"name": "", "amount": float("inf")}
+    sales_transactions = 0
+    purchase_transactions = 0
+    # Calculate stats from products
+    for prod in products:
+        pId, name, category, quantity, unit, price, status = prod
+        pId = decode_str(pId)
+        name = decode_str(name)
+        category = decode_str(category)
+        status = decode_str(status)
+        summary_stats["total"] += 1
+        if status == "Active":
+            summary_stats["active"] += 1
+            summary_stats["min_price"] = min(summary_stats["min_price"], price)
+            summary_stats["max_price"] = max(summary_stats["max_price"], price)
+            summary_stats["categories"][category] = summary_stats["categories"].get(category, 0) + 1
+        elif status == "Restock":
+            summary_stats["restock"] += 1
+        else:
+            summary_stats["deactive"] += 1
+    # Calculate sales and purchases stats
+    for s in sales:
+        prod_id = decode_str(s[1])
+        category = next((decode_str(prod[2]) for prod in products if decode_str(prod[0]) == prod_id), "")
+        sales_transactions += 1
+        sales_by_category[category] = sales_by_category.get(category, 0) + s[3]
+        total_sales += s[3]
+        name = next((decode_str(prod[1]) for prod in products if decode_str(prod[0]) == prod_id), "")
+        if s[2] > best_seller["amount"]:
+            best_seller = {"name": name, "amount": s[2]}
+        if s[2] < min_seller["amount"]:
+            min_seller = {"name": name, "amount": s[2]}
+    for p in purchases:
+        prod_id = decode_str(p[1])
+        name = next((decode_str(prod[1]) for prod in products if decode_str(prod[0]) == prod_id), "")
+        purchase_transactions += 1
+        purchases_by_product[name] = purchases_by_product.get(name, 0) + p[3]
+        total_purchases += p[3]
+    # --- END SUMMARY AND STATISTICS ---
+
+    # Write report
     with open("report.txt", "w", encoding="utf-8") as f:
-        # Header
-        header_width = 120
-        f.write(center_text("=".center(35, "="), header_width) + "\n")
-        f.write(center_text(" STOCK MANAGEMENT REPORT ", header_width) + "\n")
-        f.write(center_text("=".center(35, "="), header_width) + "\n\n")
-        
-        # System Info
-        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        f.write("Generated At : " + current_time + " (" + utc_offset + ")\n")
+        f.write("                                          ===================================                                           \n")
+        f.write("                                                STOCK MANAGEMENT REPORT                                                 \n")
+        f.write("                                          ===================================                                           \n\n")
+        now = datetime.datetime.now()
+        tz = now.astimezone().strftime('%z')
+        f.write(f"Generated At : {now.strftime('%Y-%m-%d %H:%M:%S')} ({tz[:3]}:{tz[3:]})\n")
         f.write("App Version : 1.0\n")
         f.write("Endianness : Little-Endian\n")
         f.write("Encoding : UTF-8 (fixed-length)\n\n")
-        
-        # [1] Product Summary
+
+        # Product summary table
         f.write("[1] PRODUCT SUMMARY\n")
-        header = "+" + "-"*8 + "+" + "-"*29 + "+" + "-"*11 + "+" + "-"*10 + "+" + "-"*6 + "+" + "-"*11 + "+" + "-"*9 + "+\n"
         f.write(header)
-        header_cells = [
-            format_cell("ProdID", 6),
-            format_cell("Name", 27),
-            format_cell("Category", 9),
-            format_cell("Quantity", 8),
-            format_cell("Unit", 4),
-            format_cell("SellPrice", 9),
-            format_cell("Status", 7)
-        ]
-        f.write("| " + " | ".join(header_cells) + " |\n")
+        f.write(header_titles + "\n")
         f.write(header)
-        
-        active_count = 0
-        restock_count = 0
-        deactive_count = 0
-        prices = []
-        categories = {}
-        
-        try:
-            with open("products.bin", "rb") as pf:
-                while chunk := pf.read(product_size):
-                    # [0] product_id, [1] name, [2] category, [3] quantity
-                    # [4] unit, [5] sell_price, [6] status
-                    data = st.unpack(product_fmt, chunk)
-                    
-                    # Extract and decode data
-                    prod_id = decode_str(data[0])
-                    name = decode_str(data[1])
-                    category = decode_str(data[2])
-                    quantity = data[3]
-                    unit = decode_str(data[4])
-                    sell_price = data[5]
-                    status = decode_str(data[6])
-                    
-                    # Update counters and statistics
-                    if status == "Active":
-                        active_count += 1
-                        prices.append(sell_price)
-                        categories[category] = categories.get(category, 0) + 1
-                    elif status == "Restock":
-                        restock_count += 1
-                    else:  # Deactive
-                        deactive_count += 1
-                    
-                    # Calculate proper padding for Thai characters
-                    def thai_len(s):
-                        return len(s) + sum(1 for c in s if ord(c) > 0x0E00)
-                    
-                    name_padding = 27 - (thai_len(name) - len(name))
-                    category_padding = 9 - (thai_len(category) - len(category))
-                    unit_padding = 4 - (thai_len(unit) - len(unit))
-                    
-                    # Write product line
-                    def adjust_width(text, width):
-                        thai_chars = sum(1 for c in text if ord(c) > 0x0E00)
-                        return width - thai_chars
+        for row in product_rows:
+            f.write(format_line(row) + "\n")
+        f.write(header + "\n\n")
 
-                    name_width = adjust_width(name, 27)
-                    cat_width = adjust_width(category, 9)
-                    unit_width = adjust_width(unit, 4)
+        # Summary stats
+        f.write("Summary (Active only)\n")
+        f.write(f"- Total Products (records) : {summary_stats['total']}\n")
+        f.write(f"- Active Products : {summary_stats['active']}\n")
+        f.write(f"- Restock Products: {summary_stats['restock']}\n")
+        f.write(f"- Deactivate Products : {summary_stats['deactive']}\n\n")
+        f.write("Price Statistics (THB, Active only)\n")
+        f.write(f"- Min Price : {summary_stats['min_price']:.2f}\n")
+        f.write(f"- Max Price : {summary_stats['max_price']:.2f}\n\n")
+        f.write("Products by Category (Active only)\n")
+        for cat, count in summary_stats['categories'].items():
+            f.write(f"- {cat} : {count}\n")
 
-                    cells = [
-                        format_cell(prod_id, 6),
-                        format_cell(name, name_width),
-                        format_cell(category, cat_width),
-                        format_cell(str(quantity), 8, "right"),
-                        format_cell(unit, unit_width),
-                        format_cell(format_number(sell_price), 9, "right"),
-                        format_cell(status, 7)
-                    ]
-                    f.write("| " + " | ".join(cells) + " |\n")
-                
-                f.write(header)
-                
-                # Write summary section
-                total_products = active_count + restock_count + deactive_count
-                f.write("\nSummary (Active only)\n")
-                f.write("- Total Products (records) : " + str(total_products) + "\n")
-                f.write("- Active Products : " + str(active_count) + "\n")
-                f.write("- Restock Products: " + str(restock_count) + "\n")
-                f.write("- Deactivate Products : " + str(deactive_count) + "\n\n")
-                
-                # Write price statistics
-                f.write("Price Statistics (THB, Active only)\n")
-                if prices:
-                    f.write("- Min Price : " + format_number(min(prices)) + "\n")
-                    f.write("- Max Price : " + format_number(max(prices)) + "\n")
-                else:
-                    f.write("- No active products for price statistics\n")
-                f.write("\n")
-                
-                # Write category summary
-                f.write("Products by Category (Active only)\n")
-                for cat, count in categories.items():
-                    f.write("- " + cat + " : " + str(count) + "\n")
-                
-        except FileNotFoundError:
-            f.write("No product data available.\n")
-        
-        # [2] Sales Summary
+        # Sales summary
         f.write("\n[2] SALES SUMMARY\n")
-        total_sales = 0
-        sales_by_category = {}
-        product_sales = {}
-        product_names = {}  # Store product names for reference
-        
-        try:
-            with open("sales.bin", "rb") as sf:
-                transactions = 0
-                while chunk := sf.read(sale_size):
-                    # [0] sale_id, [1] product_id, [2] product_name, [3] quantity
-                    # [4] price, [5] total_amount, [6] created_at, [7] updated_at
-                    data = st.unpack(sale_fmt, chunk)
-                    transactions += 1
-                    
-                    prod_id = decode_str(data[1])
-                    prod_name = decode_str(data[2])
-                    quantity = data[3]
-                    total_amount = data[5]
-                    
-                    total_sales += total_amount
-                    product_names[prod_id] = prod_name
-                    product_sales[prod_id] = product_sales.get(prod_id, 0) + quantity
-                    
-                    # Get category from products data
-                    try:
-                        with open("products.bin", "rb") as pf:
-                            while p_chunk := pf.read(product_size):
-                                p_data = st.unpack(product_fmt, p_chunk)
-                                if decode_str(p_data[0]) == prod_id:
-                                    category = decode_str(p_data[2])
-                                    sales_by_category[category] = sales_by_category.get(category, 0) + total_amount
-                                    break
-                    except FileNotFoundError:
-                        pass
-                
-                f.write("- Total Sales      : " + format_number(total_sales) + " บาท\n")
-                f.write("- Transactions     : " + str(transactions) + "\n")
-                
-                if product_sales:
-                    best_seller = max(product_sales.items(), key=lambda x: x[1])
-                    min_seller = min(product_sales.items(), key=lambda x: x[1])
-                    best_name = product_names.get(best_seller[0], best_seller[0])
-                    min_name = product_names.get(min_seller[0], min_seller[0])
-                    f.write("- Best Seller      : " + best_name + " (" + str(best_seller[1]) + " units)\n")
-                    f.write("- Min Seller       : " + min_name + "\n")
-                
-                f.write("- Sales by Category:\n")
-                for cat, amount in sales_by_category.items():
-                    cat_padded = format_cell(cat, 10)
-                    f.write("  * " + cat_padded + " : " + format_number(amount) + " บาท\n")
-        
-        except FileNotFoundError:
-            f.write("No sales data available.\n")
-        
-        # [3] Purchases Summary
+        f.write(f"- Total Sales      : {total_sales:.2f} บาท\n")
+        f.write(f"- Transactions     : {sales_transactions}\n")
+        if best_seller["name"]:
+            f.write(f"- Best Seller      : {best_seller['name']} ({best_seller['amount']} units)\n")
+        if min_seller["name"]:
+            f.write(f"- Min Seller       : {min_seller['name']}\n")
+        f.write("- Sales by Category:\n")
+        for cat, amount in sales_by_category.items():
+            f.write(f"  * {cat:<10} : {amount:.2f} บาท\n")
+
+        # Purchases summary
         f.write("\n[3] PURCHASES SUMMARY\n")
-        total_purchases = 0
-        purchases_by_product = {}
-        
-        try:
-            with open("purchases.bin", "rb") as pf:
-                transactions = 0
-                while chunk := pf.read(purchase_size):
-                    # [0] purchase_id, [1] product_id, [2] product_name, [3] quantity
-                    # [4] total, [5] note, [6] created_at, [7] updated_at
-                    data = st.unpack(purchase_fmt, chunk)
-                    transactions += 1
-                    
-                    prod_name = decode_str(data[2])
-                    total = data[4]
-                    
-                    total_purchases += total
-                    purchases_by_product[prod_name] = purchases_by_product.get(prod_name, 0) + total
-                
-                f.write("- Total Purchases  : " + format_number(total_purchases) + " บาท\n")
-                f.write("- Transactions     : " + str(transactions) + "\n")
-                f.write("- Purchases by Product:\n")
-                for prod, amount in purchases_by_product.items():
-                    prod_padded = format_cell(prod, 10)
-                    f.write("  * " + prod_padded + " : " + format_number(amount) + " บาท\n")
-        
-        except FileNotFoundError:
-            f.write("No purchase data available.\n")
-        
-        # [4] Profit & Loss Summary
-        f.write("\n[4] PROFIT & LOSS SUMMARY\n")
-        f.write("- Total Revenue    : " + format_number(total_sales) + " บาท\n")
-        f.write("- Total Cost       : " + format_number(total_purchases) + " บาท\n")
-        f.write("- Gross Profit     : " + format_number(total_sales - total_purchases) + " บาท\n")
+        f.write(f"- Total Purchases  : {total_purchases:.2f} บาท\n")
+        f.write(f"- Transactions     : {purchase_transactions}\n")
+        f.write("- Purchases by Product:\n")
+        for prod, amount in purchases_by_product.items():
+            f.write(f"  * {prod} : {amount:.2f} บาท\n")
