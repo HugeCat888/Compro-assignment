@@ -135,6 +135,8 @@ def purchase_handler(path, fmt, size):
                         print("All purchase records deleted.")
                     else:
                         print("Cancelled.")
+            case 0:
+                break
             case _:
                 print("Invalid option")
         
