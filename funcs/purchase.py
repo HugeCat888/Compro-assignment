@@ -2,7 +2,10 @@ import struct as st
 import os
 from funcs.fix_str import fix_str, decode_str
 
+product_path = os.path.abspath("products.bin")
+
 def purchase_handler(path, fmt, size):
+    import datetime
     while True:
         try:
             print("\nPlease choose from list:")
@@ -33,7 +36,11 @@ def purchase_handler(path, fmt, size):
                             print("="*110)
                             while chuck := file.read(size):
                                 purchaseId, productId, quantity, total, Note, created_at, updated_at = st.unpack(fmt, chuck)
-                                print(f"| {decode_str(purchaseId):<13} | {decode_str(productId):<12} | {quantity:<9} | {total:<9} | {decode_str(Note):<19} | {created_at:<14.2f} | {updated_at:<14.2f} |")
+                                created_dt = datetime.datetime.fromtimestamp(created_at)
+                                created_at = created_dt.strftime("%d/%m %H:%M")
+                                updated_dt = datetime.datetime.fromtimestamp(updated_at)
+                                updated_at = updated_dt.strftime("%d/%m %H:%M")
+                                print(f"| {decode_str(purchaseId):<13} | {decode_str(productId):<12} | {quantity:<9} | {total:<9} | {decode_str(Note):<19} | {created_at:<14} | {updated_at:<14} |")
                             print("="*110)
                     elif read_opt == 2:
                         purchase_id = input("\nEnter Purchase ID: ")
@@ -45,6 +52,10 @@ def purchase_handler(path, fmt, size):
                             while chuck := file.read(size):
                                 purchases = st.unpack(fmt, chuck)
                                 if decode_str(purchases[0]) == purchase_id:
+                                    created_dt = datetime.datetime.fromtimestamp(purchases[5])
+                                    created_at = created_dt.strftime("%d/%m %H:%M")
+                                    updated_dt = datetime.datetime.fromtimestamp(purchases[6])
+                                    updated_at = updated_dt.strftime("%d/%m %H:%M")
                                     print(f"Purchase details for ID {purchase_id}: ")
                                     print("="*60)
                                     print(f"| Purchase ID : {decode_str(purchases[0])}")
@@ -52,8 +63,8 @@ def purchase_handler(path, fmt, size):
                                     print(f"| Quantity    : {purchases[2]}")
                                     print(f"| Total       : {purchases[3]}")
                                     print(f"| Note        : {decode_str(purchases[4])}")
-                                    print(f"| Created At  : {purchases[5]:.2f}")
-                                    print(f"| Updated At  : {purchases[6]:.2f}")
+                                    print(f"| Created At  : {created_at}")
+                                    print(f"| Updated At  : {updated_at}")
                                     print("="*60)
                 except Exception as e:
                     print(f"Error reading purchase details: {e}")
@@ -70,14 +81,18 @@ def purchase_handler(path, fmt, size):
                         record = st.unpack(fmt, chunk)
                         if decode_str(record[0]) == purchase_id:
                             found = True
+                            created_dt = datetime.datetime.fromtimestamp(record[5])
+                            created_at = created_dt.strftime("%d/%m %H:%M")
+                            updated_dt = datetime.datetime.fromtimestamp(record[6])
+                            updated_at = updated_dt.strftime("%d/%m %H:%M")
                             print("Current values:")
                             print(f"| Purchase ID : {decode_str(record[0])}")
                             print(f"| Product ID  : {decode_str(record[1])}")
                             print(f"| Quantity    : {record[2]}")
                             print(f"| Total       : {record[3]}")
                             print(f"| Note        : {decode_str(record[4])}")
-                            print(f"| Created At  : {record[5]:.2f}")
-                            print(f"| Updated At  : {record[6]:.2f}")
+                            print(f"| Created At  : {created_at}")
+                            print(f"| Updated At  : {updated_at}")
                             new_quantity = int(input("Enter new quantity (or -1 to keep): "))
                             if new_quantity == -1:
                                 new_quantity = record[2]
@@ -87,7 +102,6 @@ def purchase_handler(path, fmt, size):
                             new_note = input("Enter new note (or leave blank to keep): ")
                             if not new_note:
                                 new_note = decode_str(record[4])
-                            import datetime
                             updated_at = datetime.datetime.now().timestamp()
                             new_record = st.pack(fmt, record[0], record[1], new_quantity, new_total, fix_str(new_note), record[5], updated_at)
                             tmp.write(new_record)

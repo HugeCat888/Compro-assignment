@@ -36,8 +36,8 @@ def main():
             continue
         if path == 0:
             break
-        if "Compro-assignment-main" not in os.getcwd():
-            abs_path = os.path.abspath(f"{os.getcwd()}/Compro-assignment-main/{list_path[path]}")
+        # if "Compro-assignment-main" not in os.getcwd():
+        #     abs_path = os.path.abspath(f"{os.getcwd()}/Compro-assignment-main/{list_path[path]}")
         else:
             abs_path = os.path.abspath(f"{list_path[path]}")
         

@@ -1,11 +1,11 @@
 import struct as st
 import os
-import datetime
 from funcs.fix_str import fix_str, decode_str
 
 product_path = os.path.abspath("products.bin")
 
 def sale_handler(path, fmt, size):
+    import datetime
     while True:
         try:
             print("\nPlease choose from list:")
@@ -36,7 +36,11 @@ def sale_handler(path, fmt, size):
                             print("="*94)
                             while chuck := file.read(size):
                                 saleId, productId, quantity, totalAmount, created_at, updated_at = st.unpack(fmt, chuck)
-                                print(f"| {decode_str(saleId):<8} | {decode_str(productId):<11} | {quantity:<9} | {totalAmount:<19} | {created_at:<14.2f} | {updated_at:<14.2f} |")
+                                created_dt = datetime.datetime.fromtimestamp(created_at)
+                                created_at = created_dt.strftime("%d/%m %H:%M")
+                                updated_dt = datetime.datetime.fromtimestamp(updated_at)
+                                updated_at = updated_dt.strftime("%d/%m %H:%M")
+                                print(f"| {decode_str(saleId):<8} | {decode_str(productId):<11} | {quantity:<9} | {totalAmount:<19} | {created_at:<14} | {updated_at:<14} |")
                             print("="*94)
                     elif read_opt == 2:
                         sale_id = input("\nEnter Sale ID: ")
@@ -48,14 +52,18 @@ def sale_handler(path, fmt, size):
                             while chuck := file.read(size):
                                 sales = st.unpack(fmt, chuck)
                                 if decode_str(sales[0]) == sale_id:
+                                    created_dt = datetime.datetime.fromtimestamp(sales[4])
+                                    created_at = created_dt.strftime("%d/%m %H:%M")
+                                    updated_dt = datetime.datetime.fromtimestamp(sales[5])
+                                    updated_at = updated_dt.strftime("%d/%m %H:%M")
                                     print(f"Sale details for ID {sale_id}: ")
                                     print("="*60)
                                     print(f"| Sale ID      : {decode_str(sales[0])}")
                                     print(f"| Product ID   : {decode_str(sales[1])}")
                                     print(f"| Quantity     : {sales[2]}")
                                     print(f"| Total Amount : {sales[3]}")
-                                    print(f"| Created At   : {sales[4]:.2f}")
-                                    print(f"| Updated At   : {sales[5]:.2f}")
+                                    print(f"| Created At   : {created_at}")
+                                    print(f"| Updated At   : {updated_at}")
                                     print("="*60)
                 except Exception as e:
                     print(f"Error reading sale details: {e}")
@@ -72,20 +80,23 @@ def sale_handler(path, fmt, size):
                         record = st.unpack(fmt, chunk)
                         if decode_str(record[0]) == sale_id:
                             found = True
+                            created_dt = datetime.datetime.fromtimestamp(record[4])
+                            created_at = created_dt.strftime("%d/%m %H:%M")
+                            updated_dt = datetime.datetime.fromtimestamp(record[5])
+                            updated_at = updated_dt.strftime("%d/%m %H:%M")
                             print("Current values:")
                             print(f"| Sale ID      : {decode_str(record[0])}")
                             print(f"| Product ID   : {decode_str(record[1])}")
                             print(f"| Quantity     : {record[2]}")
                             print(f"| Total Amount : {record[3]}")
-                            print(f"| Created At   : {record[4]:.2f}")
-                            print(f"| Updated At   : {record[5]:.2f}")
+                            print(f"| Created At   : {created_at}")
+                            print(f"| Updated At   : {updated_at}")
                             new_quantity = int(input("Enter new quantity (or -1 to keep): "))
                             if new_quantity == -1:
                                 new_quantity = record[2]
                             new_total = float(input("Enter new total amount (or -1 to keep): "))
                             if new_total == -1:
                                 new_total = record[3]
-                            import datetime
                             updated_at = datetime.datetime.now().timestamp()
                             new_record = st.pack(fmt, record[0], record[1], new_quantity, new_total, record[4], updated_at)
                             tmp.write(new_record)
