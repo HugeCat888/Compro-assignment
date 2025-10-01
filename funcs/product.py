@@ -21,6 +21,8 @@ def product_handler(path, fmt, size):
             print("|-- 2.2 Read by Id")
             print("| 3. Update product")
             print("| 4. Delete product")
+            print("|-- 4.1 Delete specific product")
+            print("|-- 4.2 Delete all products")
             print("| 5. Sell product")
             print("| 6. Purchase product")
             print("| 0. Exit")
@@ -155,15 +157,8 @@ def product_handler(path, fmt, size):
                 def print_product_details(product_data):
                     """Helper function to print product details in a formatted way"""
                     pId, name, category, quantity, unit, sell_price, status = product_data
-                    print("\n+" + "-" * 50 + "+")
-                    print(f"| Product ID    : {decode_str(pId):<39} |")
-                    print(f"| Name         : {decode_str(name):<39} |")
-                    print(f"| Category     : {decode_str(category):<39} |")
-                    print(f"| Quantity     : {quantity:<39} |")
-                    print(f"| Unit         : {decode_str(unit):<39} |")
-                    print(f"| Price        : {sell_price:<39.2f} |")
-                    print(f"| Status       : {decode_str(status):<39} |")
-                    print("+" + "-" * 50 + "+")
+                    print(f"| {decode_str(pId):<14}{decode_str(name):<40}{decode_str(category):<12}{quantity:<12}{decode_str(unit):<12}{sell_price:<12.2f}{decode_str(status):<12}")
+                    
 
                 try:
                     if not os.path.exists(path):
@@ -188,9 +183,14 @@ def product_handler(path, fmt, size):
                         products_found = False
                         print("\nProduct List:")
                         with open(path, "rb") as file:
+                            print("="*150)
+                            # header
+                            print("| Product ID | Name                              | Category   | Quantity   | Unit   | Price      | Status      |")
+                            print("="*150)
                             while chuck := file.read(size):
                                 products_found = True
                                 print_product_details(st.unpack(fmt, chuck))
+                            print("="*150)
                                 
                         if not products_found:
                             print("No products found in database.")
@@ -216,7 +216,15 @@ def product_handler(path, fmt, size):
                                 unpacked_data = st.unpack(fmt, chuck)
                                 if decode_str(unpacked_data[0]) == productId:
                                     print(f"\nProduct {productId} found:")
-                                    print_product_details(unpacked_data)
+                                    print("="*60)
+                                    print(f"| Product ID : {decode_str(unpacked_data[0])}")
+                                    print(f"| Name       : {decode_str(unpacked_data[1])}")
+                                    print(f"| Category   : {decode_str(unpacked_data[2])}")
+                                    print(f"| Quantity   : {unpacked_data[3]}")
+                                    print(f"| Unit       : {decode_str(unpacked_data[4])}")
+                                    print(f"| Price      : {unpacked_data[5]:.2f}")
+                                    print(f"| Status     : {decode_str(unpacked_data[6])}")
+                                    print("="*60)
                                     product_found = True
                                     break
                                     
@@ -575,7 +583,7 @@ def product_handler(path, fmt, size):
                                         next_sale_num = num + 1
                     sale_id = f"S{next_sale_num:05d}"
                     current_time = datetime.datetime.now().timestamp()
-                    total = (sell * sell_price) + ((sell * sell_price) * 0.07)
+                    total = sell * sell_price
                     sale_record = st.pack(
                         sale_fmt,
                         fix_str(sale_id),
@@ -686,7 +694,8 @@ def product_handler(path, fmt, size):
                         
                     purchase_desc = input("Enter purchase description: ")
                     current_time = datetime.datetime.now().timestamp()
-                    total = purchase_qty * sell_price
+                    new_sell_price = sell_price - 2
+                    total = purchase_qty * new_sell_price
                     
                     new_purchase = st.pack(
                         purchase_fmt,

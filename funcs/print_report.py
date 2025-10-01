@@ -40,24 +40,23 @@ purchase_size = st.calcsize(purchase_fmt)
 
 def print_report():
     # --- HEADER AND FORMAT LINE (match report.txt) ---
-    col_widths = [8, 8, 30, 13, 10, 12, 13, 14, 11]
     header = (
-        "+--------+--------+------------------------------+-------------+----------+------------+-------------+---------------+------------+\n"
+        "+--------+------------------------------+-------------+----------+------------+-------------+---------------+---------------+-----------+\n"
     )
     header_titles = (
-        "| SellId | ProdId | Name                         | Category    | Price    | Sell Amount| Prod Remain | Last Purchase | Status     |"
+        "| SellId | Name                         | Category    | Price    | Sell Amount| Prod Remain | Last Sell     | Last Purchase | Status    |"
     )
     def format_line(cols):
         return (
             f"| {str(cols[0]).ljust(6)} "
-            f"| {str(cols[1]).ljust(6)} "
-            f"| {str(cols[2]).ljust(33)} "
-            f"| {str(cols[3]).ljust(12)} "
-            f"| {str(cols[4]).rjust(8)} "
-            f"| {str(cols[5]).rjust(10)} "
-            f"| {str(cols[6]).rjust(11)} "
-            f"| {str(cols[7]).rjust(16)} "
-            f"| {str(cols[8]).ljust(10)}|"
+            f"| {str(cols[1]).ljust(30)} "
+            f"| {str(cols[2]).ljust(12)} "
+            f"| {str(cols[3]).rjust(8)} "
+            f"| {str(cols[4]).rjust(10)} "
+            f"| {str(cols[5]).rjust(11)} "
+            f"| {str(cols[6]).rjust(13)} "
+            f"| {str(cols[7]).rjust(13)} "
+            f"| {str(cols[8]).ljust(9)}|"
         )
     # --- END HEADER AND FORMAT LINE ---
 
@@ -91,7 +90,16 @@ def print_report():
         purchase_date = datetime.datetime.fromtimestamp(p[5]).strftime("%d/%m")
         if prod_id not in last_purchase_map or p[6] > last_purchase_map[prod_id][0]:
             last_purchase_map[prod_id] = (p[6], purchase_date)
-    # For each sale, show the row as in report.txt
+    # Build a mapping from product_id to latest sale datetime
+    last_sale_map = {}
+    for s in sales:
+        prod_id = decode_str(s[1])
+        sale_time = s[4]
+        sale_dt = datetime.datetime.fromtimestamp(sale_time)
+        sale_str = sale_dt.strftime("%d/%m %H:%M")
+        if prod_id not in last_sale_map or sale_time > last_sale_map[prod_id][0]:
+            last_sale_map[prod_id] = (sale_time, sale_str)
+    # For each sale, show the row as in report_backup.txt
     for s in sales:
         sale_id = decode_str(s[0])
         prod_id = decode_str(s[1])
@@ -103,16 +111,18 @@ def print_report():
             name = decode_str(name)
             category = decode_str(category)
             status = decode_str(status)
+            # Last sale date/time for this product
+            last_sell = last_sale_map.get(prod_id, (None, "--/-- --:--"))[1]
             # Last purchase date for this product
             last_purchase = last_purchase_map.get(prod_id, (None, "--/--"))[1]
             product_rows.append([
                 sale_id,
-                prod_id,
                 name,
                 category,
                 f"{price:8.2f}",
                 f"{sell_amount:10}",
                 f"{quantity:10}",
+                last_sell,
                 last_purchase,
                 status
             ])
