@@ -49,14 +49,14 @@ def print_report():
     def format_line(cols):
         return (
             f"| {str(cols[0]).ljust(6)} "
-            f"| {str(cols[1]).ljust(30)} "
-            f"| {str(cols[2]).ljust(12)} "
-            f"| {str(cols[3]).rjust(8)} "
-            f"| {str(cols[4]).rjust(10)} "
+            f"| {str(cols[1]).ljust(28)} "
+            f"| {str(cols[2]).ljust(11)} "
+            f"| {str(cols[3]).rjust(7)} "
+            f"| {str(cols[4]).rjust(9)} "
             f"| {str(cols[5]).rjust(11)} "
             f"| {str(cols[6]).rjust(13)} "
             f"| {str(cols[7]).rjust(13)} "
-            f"| {str(cols[8]).ljust(9)}|"
+            f"| {str(cols[8]).ljust(10)}|"
         )
     # --- END HEADER AND FORMAT LINE ---
 

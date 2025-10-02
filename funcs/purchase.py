@@ -31,17 +31,17 @@ def purchase_handler(path, fmt, size):
                 try:
                     if read_opt == 1:
                         with open(path, "rb") as file:
-                            print("="*110)
-                            print("| Purchase ID   | Product ID   | Quantity  | Total     | Note              | Created At     | Updated At     |")
-                            print("="*110)
+                            print("="*125)
+                            print("| Purchase ID   | Product ID   | Quantity  | Total     | Note                             | Created At     | Updated At     |")
+                            print("="*125)
                             while chuck := file.read(size):
                                 purchaseId, productId, quantity, total, Note, created_at, updated_at = st.unpack(fmt, chuck)
                                 created_dt = datetime.datetime.fromtimestamp(created_at)
                                 created_at = created_dt.strftime("%d/%m %H:%M")
                                 updated_dt = datetime.datetime.fromtimestamp(updated_at)
                                 updated_at = updated_dt.strftime("%d/%m %H:%M")
-                                print(f"| {decode_str(purchaseId):<13} | {decode_str(productId):<12} | {quantity:<9} | {total:<9} | {decode_str(Note):<19} | {created_at:<14} | {updated_at:<14} |")
-                            print("="*110)
+                                print(f"| {decode_str(purchaseId):<13} | {decode_str(productId):<12} | {quantity:<9} | {total:<9} | {decode_str(Note):<32} | {created_at:<14} | {updated_at:<14} |")
+                            print("="*125)
                     elif read_opt == 2:
                         purchase_id = input("\nEnter Purchase ID: ")
                         if "0" not in purchase_id or len(purchase_id) < 6:

@@ -2,7 +2,7 @@
                                                 STOCK MANAGEMENT REPORT                                                 
                                           ===================================                                           
 
-Generated At : 2025-10-01 13:40:09 (+07:00)
+Generated At : 2025-10-02 10:47:31 (+07:00)
 App Version : 1.0
 Endianness : Little-Endian
 Encoding : UTF-8 (fixed-length)
@@ -11,10 +11,10 @@ Encoding : UTF-8 (fixed-length)
 +--------+------------------------------+-------------+----------+------------+-------------+---------------+---------------+-----------+
 | SellId | Name                         | Category    | Price    | Sell Amount| Prod Remain | Last Sell     | Last Purchase | Status    |
 +--------+------------------------------+-------------+----------+------------+-------------+---------------+---------------+-----------+
-| S00001 | น้ำดื่มสิงห์ 600 มล.           | เครื่องดื่ม  |     7.00 |         20 |          60 |   24/09 20:50 |         24/09 | Active   |
-| S00002 | ขนมปังเลอแปงไส้ครีม            | ขนม          |    14.00 |         10 |          45 |   01/10 13:24 |         01/10 | Restock  |
-| S00003 | น้ำดื่มสิงห์ 600 มล.           | เครื่องดื่ม  |     7.00 |         25 |          60 |   24/09 20:50 |         24/09 | Active   |
-| S00004 | ขนมปังเลอแปงไส้ครีม            | ขนม          |    14.00 |          7 |          45 |   01/10 13:24 |         01/10 | Restock  |
+| S00001 | singha water                 | drink       |     7.00 |         20 |          60 |   24/09 20:50 |         24/09 | Active    |
+| S00002 | Le pan                       | snack       |    14.00 |         10 |          45 |   01/10 13:24 |         01/10 | Restock   |
+| S00003 | singha water                 | drink       |     7.00 |         25 |          60 |   24/09 20:50 |         24/09 | Active    |
+| S00004 | Le pan                       | snack       |    14.00 |          7 |          45 |   01/10 13:24 |         01/10 | Restock   |
 +--------+------------------------------+-------------+----------+------------+-------------+---------------+---------------+-----------+
 
 
@@ -29,22 +29,22 @@ Price Statistics (THB, Active only)
 - Max Price : 63.00
 
 Products by Category (Active only)
-- เครื่องดื่ม : 1
-- อาหารแห้ง : 1
+- drink : 1
+- dried food : 1
 
 [2] SALES SUMMARY
 - Total Sales      : 568.00 บาท
 - Transactions     : 4
-- Best Seller      : น้ำดื่มสิงห์ 600 มล. (25 units)
-- Min Seller       : ขนมปังเลอแปงไส้ครีม
+- Best Seller      : singha water (25 units)
+- Min Seller       : Le pan
 - Sales by Category:
-  * เครื่องดื่ม : 325.00 บาท
-  * ขนม        : 243.00 บาท
+  * drink      : 325.00 บาท
+  * snack      : 243.00 บาท
 
 [3] PURCHASES SUMMARY
 - Total Purchases  : 928.00 บาท
 - Transactions     : 4
 - Purchases by Product:
-  * มาม่า บะหมี่กึ่งสำเร็จรูป รสต้มยำกุ้ง : 693.00 บาท
-  * น้ำดื่มสิงห์ 600 มล. : 35.00 บาท
-  * ขนมปังเลอแปงไส้ครีม : 200.00 บาท
+  * mama noodle : 693.00 บาท
+  * singha water : 35.00 บาท
+  * Le pan : 200.00 บาท

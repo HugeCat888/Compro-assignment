@@ -71,7 +71,7 @@ def product_handler(path, fmt, size):
                     
                     # Get and validate category
                     print("\nPlease choose category from list: ")
-                    print("\n1. เครื่องดื่ม\n2. ขนม\n3. อาหารแห้ง\n4. ของสด\n5. เครื่องปรุง")
+                    print("\n1. drink\n2. snack\n3. dried food\n4. raw food\n5. flavor")
                     while True:
                         try:
                             cat_choice = int(input("\nEnter Category (1-5): "))
@@ -96,7 +96,7 @@ def product_handler(path, fmt, size):
                     
                     # Get and validate unit
                     print("\nPlease choose unit from list: ")
-                    print("\n1. ชิ้น\n2. ขวด\n3. แพ็ค\n4. กล่อง\n5. ห่อ")
+                    print("\n1. piece\n2. can\n3. pack\n4. box\n5. wrap")
                     while True:
                         try:
                             unit_choice = int(input("\nEnter Unit (1-5): "))
@@ -157,7 +157,7 @@ def product_handler(path, fmt, size):
                 def print_product_details(product_data):
                     """Helper function to print product details in a formatted way"""
                     pId, name, category, quantity, unit, sell_price, status = product_data
-                    print(f"| {decode_str(pId):<14}{decode_str(name):<40}{decode_str(category):<12}{quantity:<12}{decode_str(unit):<12}{sell_price:<12.2f}{decode_str(status):<12}")
+                    print(f"| {decode_str(pId):<10} | {decode_str(name):<33} | {decode_str(category):<12} | {quantity:<12} | {decode_str(unit):<12} | {sell_price:<12.2f} | {decode_str(status):<12} | ")
                     
 
                 try:
@@ -185,7 +185,7 @@ def product_handler(path, fmt, size):
                         with open(path, "rb") as file:
                             print("="*150)
                             # header
-                            print("| Product ID | Name                              | Category   | Quantity   | Unit   | Price      | Status      |")
+                            print("| Product ID | Name                              | Category     | Quantity     | Unit         | Price        | Status       |")
                             print("="*150)
                             while chuck := file.read(size):
                                 products_found = True
@@ -334,7 +334,7 @@ def product_handler(path, fmt, size):
 
                     if update_choice == 2 or update_choice == 6:
                         print("\nPlease choose category from list:")
-                        print("1. เครื่องดื่ม\n2. ขนม\n3. อาหารแห้ง\n4. ของสด\n5. เครื่องปรุง")
+                        print("1. drinks\n2. snack\n3. dried food\n4. raw food\n5. flavor")
                         while True:
                             try:
                                 cat_choice = int(input("\nEnter Category (1-5): "))
@@ -359,7 +359,7 @@ def product_handler(path, fmt, size):
 
                     if update_choice == 4 or update_choice == 6:
                         print("\nPlease choose unit from list:")
-                        print("1. ชิ้น\n2. ขวด\n3. แพ็ค\n4. กล่อง\n5. ห่อ")
+                        print("1. piece\n2. can\n3. pack\n4. box\n5. wrap")
                         while True:
                             try:
                                 unit_choice = int(input("\nEnter Unit (1-5): "))
@@ -789,11 +789,11 @@ def product_handler(path, fmt, size):
 
 def category_list(index):
     cat_list = {
-        1: "เครื่องดื่ม",
-        2: "ขนม",
-        3: "อาหารแห้ง",
-        4: "ของสด",
-        5: "เครื่องปรุง"
+        1: "drink",
+        2: "snack",
+        3: "dried food",
+        4: "raw food",
+        5: "flavor"
     }
     for i, v in cat_list.items():
         if i == index:
@@ -801,11 +801,11 @@ def category_list(index):
         
 def unit_list(index):
     unit_list = {
-        1: "ชิ้น",
-        2: "ขวด",
-        3: "แพ็ค",
-        4: "กล่อง",
-        5: "ห่อ"
+        1: "piece",
+        2: "can",
+        3: "pack",
+        4: "box",
+        5: "wrap"
     }
     for i, v in unit_list.items():
         if i == index:
